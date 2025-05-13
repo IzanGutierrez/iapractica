@@ -1,5 +1,6 @@
 # Required imports
 import numpy as np
+import networkx as nx
 from Location import Location
 from Boundaries import Boundaries
 from Radar import Radar

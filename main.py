@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import sys
 import json
 import os
+import networkx as nx
 from Map import Map
 from Boundaries import Boundaries
 from SearchEngine import build_graph, path_finding, compute_path_cost, h1, h2
@@ -29,7 +30,7 @@ def plot_detection_fields(detection_map: np.array, bicubic: bool=True) -> None:
     """ Auxiliary function for plotting the detection fields """
     plt.figure(figsize=(8, 8))
     plt.title("Radar detection fields")
-    im = plt.imshow(X=detection_map, cmap='Greens', interpolation='bicubic' if bicubic else None)
+    im = plt.imshow(X=detection_map, cmap='inferno', interpolation='bicubic' if bicubic else None)
     plt.colorbar(im, label='Detection values')
     plt.show()
     return
@@ -105,7 +106,7 @@ def main() -> None:
 
     # Build the graph from the detection map
     G = build_graph(detection_map=detection_map, tolerance=execution_parameters['tolerance'])
-
+    
     # Get the POI's that the plane must visit
     POIs = np.array(execution_parameters['POIs'], dtype=np.float32)
 
