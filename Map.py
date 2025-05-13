@@ -54,4 +54,22 @@ class Map:
     
     def compute_detection_map(self) -> np.array:
         """ Computes the detection map for each coordinate in the map (with all the radars) """
-        ...
+        # Crear el mapa de detección con valores pequeños iniciales
+        detection_map = np.full((self.height, self.width), EPSILON, dtype=np.float32)
+
+        # Crear los rangos de latitud y longitud
+        latitude = np.linspace(start=self.boundaries.min_lat, stop=self.boundaries.max_lat, num=self.height)
+        longitude = np.linspace(start=self.boundaries.min_lon, stop=self.boundaries.max_lon, num=self.width)
+
+      # Iterar sobre todas las posiciones del mapa
+        for i in tqdm(range(self.height), desc="Computing detection map"):
+            for j in range(self.width):
+
+                # Sumar las detecciones de todos los radares en esta ubicación
+                total_detection = 0.0
+                for radar in self.radars:
+                    total_detection += radar.compute_detection_level(latitude[i], longitude[j])
+
+                # Guardar el valor de detección total
+                detection_map[i, j] = total_detection + EPSILON  # evitar 0
+        return detection_map
