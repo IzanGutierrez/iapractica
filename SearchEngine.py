@@ -53,7 +53,8 @@ def build_graph(detection_map: np.array, tolerance: np.float32) -> nx.DiGraph:
                 if 0 <= ni < height and 0 <= nj < width:
                     neighbor_node = (ni, nj)
                     weight = detection_map[ni, nj]
-                    G.add_edge(current_node, neighbor_node, weight=weight)
+                    if weight >= tolerance:
+                        G.add_edge(current_node, neighbor_node, weight=weight)
     return G
 
 def discretize_coords(high_level_plan: np.array, boundaries: Boundaries, map_width: np.int32, map_height: np.int32) -> np.array:
@@ -105,6 +106,7 @@ def path_finding(G: nx.DiGraph,
 
 def compute_path_cost(G: nx.DiGraph, solution_plan: list) -> np.float32:
     """ Computes the total cost of the whole planning solution """
+
     total_cost = 0.0
     for segment in solution_plan:
         path = [eval(p) for p in segment]
