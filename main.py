@@ -30,7 +30,7 @@ def plot_detection_fields(detection_map: np.array, bicubic: bool=True) -> None:
     """ Auxiliary function for plotting the detection fields """
     plt.figure(figsize=(8, 8))
     plt.title("Radar detection fields")
-    im = plt.imshow(X=detection_map, cmap='inferno', interpolation='bicubic' if bicubic else None)
+    im = plt.imshow(X=detection_map, cmap='Greens', interpolation='bicubic' if bicubic else None)
     plt.colorbar(im, label='Detection values')
     plt.show()
     return

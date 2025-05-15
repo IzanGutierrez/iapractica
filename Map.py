@@ -62,7 +62,7 @@ class Map:
         latitude = np.linspace(start=self.boundaries.min_lat, stop=self.boundaries.max_lat, num=self.height)
         longitude = np.linspace(start=self.boundaries.min_lon, stop=self.boundaries.max_lon, num=self.width)
 
-      # Iterar sobre todas las posiciones del mapa
+        # Iterar sobre todas las posiciones del mapa
         for i in tqdm(range(self.height), desc="Computing detection map"):
             for j in range(self.width):
 
@@ -70,7 +70,7 @@ class Map:
                 total_detection = 0.0
                 for radar in self.radars:
                     total_detection += radar.compute_detection_level(latitude[i], longitude[j])
-
+                
                 # Guardar el valor de detección total
-                detection_map[i, j] = total_detection + EPSILON  # evitar 0
+                detection_map[i, j] = (total_detection + EPSILON) 
         return detection_map

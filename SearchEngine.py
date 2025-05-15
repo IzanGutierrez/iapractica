@@ -18,7 +18,7 @@ def h1(current_node, objective_node) -> np.float32:
     h += abs(x1 - x2) + abs(y1 - y2)
 
     NODES_EXPANDED += 1
-    return h
+    return h * EPSILON
 
 def h2(current_node, objective_node) -> np.float32:
     """ Second heuristic to implement 
@@ -31,7 +31,7 @@ def h2(current_node, objective_node) -> np.float32:
     h += np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
     NODES_EXPANDED += 1
-    return h
+    return h * EPSILON
 
 def build_graph(detection_map: np.array, tolerance: np.float32) -> nx.DiGraph:
     """ Builds an adjacency graph (not an adjacency matrix) from the detection map """
@@ -41,10 +41,7 @@ def build_graph(detection_map: np.array, tolerance: np.float32) -> nx.DiGraph:
     #   -> Go left
     #   -> Go right
     # Not every point has always 4 possible neighbors
-    """
-    Construye un grafo dirigido desde un mapa de detección.
-    Cada celda es un nodo; las aristas a vecinos tienen peso igual al valor del destino.
-    """
+    
     height, width = detection_map.shape
     G = nx.DiGraph()
 
@@ -61,7 +58,17 @@ def build_graph(detection_map: np.array, tolerance: np.float32) -> nx.DiGraph:
 
 def discretize_coords(high_level_plan: np.array, boundaries: Boundaries, map_width: np.int32, map_height: np.int32) -> np.array:
     """ Converts coordiantes from (lat, lon) into (x, y) """
-    ...
+    lat_range = np.linspace(boundaries.min_lat, boundaries.max_lat, map_height)
+    lon_range = np.linspace(boundaries.min_lon, boundaries.max_lon, map_width)
+    
+    discretized = []
+    for lat, lon in high_level_plan:
+        # Find nearest grid index
+        x = np.argmin(np.abs(lat_range - lat))
+        y = np.argmin(np.abs(lon_range - lon))
+        discretized.append((x, y))
+    
+    return np.array(discretized)
 
 def path_finding(G: nx.DiGraph,
                  heuristic_function,
@@ -71,9 +78,36 @@ def path_finding(G: nx.DiGraph,
                  map_width: np.int32,
                  map_height: np.int32) -> tuple:
     """ Implementation of the main searching / path finding algorithm """
-    path = nx.astar_path(G, start, goal, heuristic=heuristic, weight='weight')
-    return path
+    global NODES_EXPANDED
+    NODES_EXPANDED = 0  # Reset the counter
+    
+    # Convert coordinates to grid indices
+    discrete_locs = discretize_coords(locations, boundaries, map_width, map_height)
+    
+    plan = []
+    total_path = []
+    
+    current_index = initial_location_index
+    
+    for next_index in range(len(discrete_locs)):
+        if next_index == current_index:
+            continue
+        start = tuple(discrete_locs[current_index])
+        goal = tuple(discrete_locs[next_index])
+
+        path = nx.astar_path(G, start, goal, heuristic=heuristic_function, weight='weight')
+        plan.append([str(p) for p in path])
+        total_path.extend(path if not total_path else path[1:])
+        
+        current_index = next_index
+    
+    return plan, NODES_EXPANDED
 
 def compute_path_cost(G: nx.DiGraph, solution_plan: list) -> np.float32:
     """ Computes the total cost of the whole planning solution """
-    return sum(G[u][v]['weight'] for u, v in zip(path[:-1], path[1:]))
+    total_cost = 0.0
+    for segment in solution_plan:
+        path = [eval(p) for p in segment]
+        for u, v in zip(path[:-1], path[1:]):
+            total_cost += G[u][v]['weight']
+    return total_cost
